@@ -36,13 +36,17 @@ check_eq(ry, 0, "root.y")
 check_eq(rw, app.WIDTH, "root.w")
 check_eq(rh, app.HEIGHT, "root.h")
 
-local _, status_y = built.status_label:rect()
+local status_bar = assert(built.refs.status_bar, "refs.status_bar deveria existir")
+local status_label = assert(status_bar.label, "refs.status_bar.label deveria existir")
+local _, status_y = status_label:rect()
 check(status_y > app.HEIGHT * 0.8, "a barra de status deveria ficar na parte de baixo")
+check(type(built.screen.destroy) == "function", "a view deveria expor destroy")
 
+-- Passo 5 inclui os glifos dos labels; com passo 19 o texto era ignorado.
 local seen = {}
 local colors = 0
-for y = 0, height - 1, 19 do
-  for x = 0, width - 1, 19 do
+for y = 0, height - 1, 5 do
+  for x = 0, width - 1, 5 do
     local index = (y * width + x) * 4 + 1
     local key = pixels:sub(index, index + 3)
     if not seen[key] then
@@ -57,18 +61,24 @@ check(colors > 3, "o render parece vazio (poucas cores distintas)")
 built.api.set_status("Teste ok")
 built.ctx:render(app.WIDTH, app.HEIGHT, 0)
 check_eq(state.get("status"), "Teste ok", "status atualizado")
+check_eq(status_label:get("text"), "Teste ok", "label de status atualizado")
 
 -- Data (libs.date integrada na barra de status)
 check(state.get("date"):match("^%d%d/%d%d/%d%d%d%d$"), "data inicial")
 built.api.set_date("01/01/2025")
 check_eq(state.get("date"), "01/01/2025", "api.set_date")
+check_eq(status_bar.date_label:get("text"), "01/01/2025", "label de data atualizado")
 
 -- Tema
 local before = theme.current()
 built.api.toggle_theme()
 check(theme.current() ~= before, "toggle_theme deveria trocar o tema")
+check_eq(status_bar.theme_label:get("text"), theme.current(), "label de tema atualizado")
 built.api.toggle_theme()
 check_eq(theme.current(), before, "toggle_theme deveria voltar ao tema original")
+check_eq(status_bar.theme_label:get("text"), before, "label de tema restaurado")
+
+built.screen.destroy()
 
 print(string.format(
   "smoke ok: %dx%d, %d regiao(oes), %d cores, tema=%s",

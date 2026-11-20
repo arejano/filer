@@ -6,7 +6,6 @@
 local state = require("app.state")
 local theme = require("app.theme")
 local filer = require("app.core.filer")
-local inspect = require("libs.inspect")
 
 local M = {}
 
